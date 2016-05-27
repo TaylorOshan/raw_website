@@ -29,7 +29,72 @@
 
      <section id="content" class="body">
         <aside id="featured"><article>
-                <h1 class="entry-title"><a href="/api-design.html">Initial GSOC meeting - API Design</a></h1>
+                <h1 class="entry-title"><a href="/framework.html">SpInt Framework</a></h1>
+<footer class="post-info">
+        <abbr class="published" title="2016-05-27T08:45:00-07:00">
+                Fri 27 May 2016
+        </abbr>
+
+        <address class="vcard author">
+                By <a class="url fn" href="/author/taylor-oshan.html">Taylor Oshan</a>
+        </address>
+<p>In <a href="/category/misc.html">misc</a>. </p>
+<p>tags: <a href="/tag/gsoc.html">GSOC</a></p></p></footer><!-- /.post-info --><!-- /.post-info -->
+                <p>Given the API deisgn discussed in the previous post, the initial few days of
+coding were used to build the general framework and core classes that will be
+used in SpInt. Since the gravity-type models make up the majority of existig
+model specifications, the initial focus for developing the general framework
+essentially means focusing on developing classes for gravity models.</p>
+<p>It was decided to split the four primary model specfications (unconstrained or
+traditional gravity model, production-constrained, attraction-constrained,
+doubly-constrained) into four separate &quot;user&quot; style classes (see pysal.spreg
+module) that inherit from one base class (BaseGravity). These user classes
+serve to accept structured array inputs and configurations from the user and
+then carry out model-specific checks of the data. Then they pass the inputs into
+an __init__ method for BaseGravity. Depending on which inputs are passed and the
+type of user class that __init__ is called from, BaseGravity then further checks the
+data and preapres it into an endogenous dependent variable, y, and and a
+set of exogenous explanatory variables, X. Finally, BaseGravity then calls an
+__init__ method to the class that it inherits from, CountModel, with these newly
+formatted inputs and any estimation options, and a fit() method. The init_method
+carries out a simple check to make sure the dependent variable, y, is indeed a
+count-based variable and the fit method carries out the selected estimation
+routine. Currently the default estimatation framework/method is MLE using the generalized linear model (GLM)/iteratively re-weighted least squares (IWLS) in statmodels,
+though others can be added such as GLM/gradient search or non-linear
+formulations/gradient search.</p>
+<p>The design was carried out in this manner (CountModel --&gt; BaseGravity --&gt;
+Gravity/Production/Attraction/Doubly) in order to promote flexibility and modularity.
+For example, CountModel can be expanded by adding tests for overdisperison,
+additional estimation routines and count-based probability models other than
+Poisson (i.e., negative binomial), which can be useful throughout pysal for other count-based
+modeling tasks. This also means that SpInt is not a priori limited to any single
+type of estimation technique or probability model in the future. Then the BaseGravity
+class does the heavy lifting in terms of data munging and common data integrtiy
+checks. And finally, the user classes aim to restrcit input for specific types
+of gravity models, carry out model-specific checks, and then to organize and
+prepare the model results for the user.</p>
+<p>This code and an exmple of its use in an ipython notebook can be found <a class="reference external" href="https://github.com/TaylorOshan/pysal/blob/glm_spint/pysal/contrib/spint">here</a>. At
+the moment estimation can only be carried out using a GLM/IWLS in statmodels and
+only basic results are available, though a more user-friendly presentation of
+the results will be created, such as the results.summary() method in
+statsmodels.</p>
+<p>Looking forward, this framework will be filled out with the additons already
+described as well potentially adding a mechanism that allows users to flexibly
+use different input formats. Currently, input consists of all arrays, but it
+would be helpful to allow users to pass in a pandas DataFrames and the names of the columns that refer to different arrays. I will also begin
+to explore sparse data structures/algebra and when they will be the most
+beneficial to employ.</p>
+
+        </article></aside><!-- /#featured -->
+                <h1>Other articles</h1>
+                <hr />
+                    <ol id="posts-list" class="hfeed">
+        <li><article class="hentry">
+                <header>
+                        <h1><a href="/api-design.html" rel="bookmark" title="Permalink to Initial GSOC meeting - API Design">Initial GSOC meeting - API Design</a></h1>
+                </header>
+
+                <div class="entry-content">
 <footer class="post-info">
         <abbr class="published" title="2016-05-20T11:23:00-07:00">
                 Fri 20 May 2016
@@ -40,100 +105,10 @@
         </address>
 <p>In <a href="/category/misc.html">misc</a>. </p>
 <p>tags: <a href="/tag/gsoc.html">GSOC</a></p></p></footer><!-- /.post-info --><!-- /.post-info -->
-                <p>During the community bonding period of the GSOC program I have been thinking
-largely about the design of the API for SpInt.</p>
-<p>First, the API would need to accommodate a basic gravity model and then also support
-extensions that include SAR terms, a spatial filter term, or a competing
-destinations term. Typically the competing destinations term is nothing more
-than a sum of distance weighted attributes, which should be simple. I think it
-shouldn't be too hard use the existing pysal spatial weights module as a base to
-create a function to create OD-based SAR spatial weights. And there is some code
-available for computing spatial filters in <a class="reference external" href="https://github.com/bchastain/esf">python</a>. So I think in order to accommodate the three
-extensions it might be simplest to have the user first compute these and then
-pass them in  as optional arguments to the basic gravity model. In the case of
-the competing destinations or spatial filter model, there is no new estimator
-required and so its as easy as including the extra variable (within an OLS or
-Poisson regression framework). If the optional SAR term is passed in, then under
-the hood a new estimator could be used rather than the default OLS or  Poisson
-estimator. I imagine the basic call could look something like</p>
-<p>spint.gravity(required_arguments, cd=None, sf=None, w=None)</p>
-<p>where cd would be an optional competing destinations variable, sf the optional
-spatial filter term, and w would be optional spatial weight, each of which would
-be pre-computed using code from the weights module or other utility functions.</p>
-<p>The other alternative could be to have separate calls for each extension where
-the corresponding optional term now becomes required:</p>
-<p>spint.gravity(required_arguments)
-spint.gravity.cd(required_arguments)
-spint.gravity.sf(required_arguments)
-spint.gravity.lag(required_arguments)</p>
-<p>I am inclined to think the former is simpler, esepcially if one would like to
-combine models.</p>
-<p>Another layer to the API would be each &quot;member&quot; to the Wilson-type &quot;family&quot; of
-models: unconstrained or basic gravity model, production or origin constrained,
-attraction or destination constrained, and doubly constrained. This is achieved
-technically by adding in either balancing factors or fixed effects during
-estimation, depending on the estimation technique. Then building from the first
-two examples the API could look like either:</p>
-<ol class="arabic simple">
-<li></li>
-</ol>
-<p>spint.gravity.unconstrained(required_arguments, cd=None, sf=None, w=None)</p>
-<p>spint.gravity.production(required_arguments, cd=None, sf=None, w=None)</p>
-<p>spint.gravity.attraction(required_arguments, cd=None, sf=None, w=None)</p>
-<p>spint.gravity.doubly(required_arguments, cd=None, sf=None, w=None)</p>
-<ol class="arabic simple" start="2">
-<li></li>
-</ol>
-<p>spint.gravity(required_arguments, constraint=none)</p>
-<p>spint.gravity.cd(required_arguments, constraint=none)</p>
-<p>spint.gravity.sf(required_arguments, constraint=none)</p>
-<p>spint.gravity.lag(required_arguments, constraint=none)</p>
-<p>I think that option (1) may be more intuitive because the
-doubly-constrained model is unique in that it requires a squared OD matrix (all
-origins are also destinations) and so it might be natural since each of the four
-varieties may have different input properties that need to be checked.</p>
-<p>In terms of model fitting techniques, I think it would be neat to use something
-similar to stats models like:</p>
-<p>model = spint.gravity.unconstrained(required_arguments, cd=None, sf=None,
-w=None)</p>
-<p>results = model.fit(fit_arguments)</p>
-<p>which would be natural if everything is being built onto of a GLM framework. The
-reasoning behind using a GLM framework was to be able take advantage of
-additional count models such as negative binomial relatively easily.
-&quot;fit_arguments&quot; could include the type of probability model (gaussian, poisson,
-negative binomial, etc.), and the fit technique (iteratively re-weighted least
-squares or Theano/Autograd MLE). It could then be possible to build a higher
-level of abstraction on top of this that more closely matches the base/user
-class organization used in the spreg module within pysal.</p>
-<p>Aside from gravity models, there are other spatial interaction models, but that I sort of think of as separate
-from those described above because they are non-parametric methods, which are either
-deterministic &quot;universal&quot; models that mostly come out of the human mobility
-literature or use a neural network approach. I think it would
-make sense to accommodate non-parametric  models so that they are separate from
-gravity models. For example:</p>
-<p>spint.mobility.radiaton()</p>
-<p>spint.mobility.inv_pop_weighted()</p>
-<p>spint.neural()</p>
-<p>To summarize, the API needs to accomodate the &quot;family&quot; of spatial interaction
-model varieties (unconstrained, production-constrained, attraction-constrained,
-doubly-constrained), where each of these varieties can then have several
-extensions to include a competing destinationas terms, a spatial filtering term,
-or a SAR term. The API also needs to acommodate non-parametric methods such as
-dterminstic models and neural network based models. Framework (1) from above
-will be adopted first as the main API.</p>
-<p>During the first GSOC meeting with my mentors we decided it would be best to
-first get as many model variations working as possible. Then we could tweak the
-API accoridngly and focus on optimizing the computational speed. We've also set
-up a Trello board so that we can collaborate on assigning/managing tasks for the
-project.</p>
-<p>Finally, I have started a wiki <a class="reference external" href="https://github.com/pysal/pysal/wiki/SpInt-Development">page</a> on the pysal group on Github where it will
-be possible to discuss model specifications and their related literature, such
-as the Poisson SAR lag model.</p>
-
-        </article></aside><!-- /#featured -->
-                <h1>Other articles</h1>
-                <hr />
-                    <ol id="posts-list" class="hfeed">
+                
+                <a class="readmore" href="/api-design.html">read more</a>
+                </div><!-- /.entry-content -->
+        </article></li>
         <li><article class="hentry">
                 <header>
                         <h1><a href="/hello-world.html" rel="bookmark" title="Permalink to Hello World">Hello World</a></h1>
