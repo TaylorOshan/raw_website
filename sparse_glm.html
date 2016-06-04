@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>Generalized Linear Models and Sparse Design Matrices</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="/theme/css/main.css" type="text/css" />
+        <link href="/" type="application/atom+xml" rel="alternate" title="Building SpInt ATOM Feed" />
+
+
+        <!--[if IE]>
+                <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+        <!--[if lte IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie.css"/>
+                <script src="/js/IE8.js" type="text/javascript"></script><![endif]-->
+
+        <!--[if lt IE 7]>
+                <link rel="stylesheet" type="text/css" media="all" href="/css/ie6.css"/><![endif]-->
+
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/index.html">Building SpInt </a></h1>
+                <nav><ul>
+                <li><a href="/">Archives</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+
+<section id="content" class="body">
+<article>
+        <header> <h1 class="entry-title"><a href="sparse_glm.html"
+        rel="bookmark" title="Permalink to Generalized Linear Models and Sparse Design Matrices">Generalized Linear Models and Sparse Design Matrices</a></h1>  </header>
+        <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2016-06-03T16:12:00-07:00">
+                Fri 03 June 2016
+        </abbr>
+
+        <address class="vcard author">
+                By <a class="url fn" href="/author/taylor-oshan.html">Taylor Oshan</a>
+        </address>
+<p>In <a href="/category/misc.html">misc</a>. </p>
+<p>tags: <a href="/tag/gsoc.html">GSOC</a></p></p></footer><!-- /.post-info --><!-- /.post-info -->
+        <p>This week was primarily focused on exploring different options for estimating generalized linear models (GLM). First, I built an option into the gravity model class that would use exisitng GLM code through the statmodels project. Next, I put together my own code to carry out iteratively weighted least squares estimation for GLM's. Of immediate interest was a comparison of the speed of the code-bases for carrying out the estimation of a GLM. Each technique was used to calibrate each model variety (unconstrained, production-constrainedm atttraction-constrainem, and doubly constrained) when the number of origin-destination pairs (sample size) was N = 50, 100, 150, and 200. Some quick results can be see here in this <a class="reference external" href="https://gist.github.com/TaylorOshan/ccac7e5489b5b2b1799bf79ef001d922">gist</a>. Expectedly, the results show that for either technique the unconstrained models are the fastest to calibrate (no fixed effects), followed the by the singly-constrained models (N fixed effects), and finally, the doubly-constrained models take the longest (N*2 fixed effects). The more fixed effects in the model, the larger the deisgn matrix, X, and the longer the estimation routines will take. More surprisingly, the custom GLM (from now on just GLM) was way faster than the statsmodels GLM (from now on SMGLM). The statsmodels uses either the pseudoinverse or a QR decomposiiton to compute the least sqaures estimator, which would have been thought to be way quicker than the direct computations used in my code. For now, I have only tested the pseudo-indverse SMGLM, as the flag to switch to QR decomposition is not actually available to the SMGLM api (on to the weight least sqaures class at a lower level of abstraction). Perhaps, the SMGLM takes longer to compute because it has a fuller suite of diagnostics or perhaps the psuedo-inverse is not as quick when there is a sparse design matrix (i.e., many fixed effects).</p>
+<p>After some additional exploring, I found that there was an upper limit to the
+number of locations (N = locations**2) that could considered for the
+singly-constrained or doubly-constrained models given the high number of fixed
+effects. Somewhere between 1000 and 2000 locations, my notebook would run out of
+memory. To cirvument this, I next developed a version of the custom GLM code
+that was compatible with the sparse data strcutres from the Scipy library, which
+cna be found in this <a class="reference external" href="https://github.com/TaylorOshan/pysal/tree/sparse_glm_spint/pysal/contrib/spint">branch</a>. This required a custom version of the
+categorical() function from statsmodels (exampe <a class="reference external" href="https://gist.github.com/TaylorOshan/45cd01bb08e23280549aee770a05cdfe">here</a>) to create the dummy variables needed for constrained spatial interaction models and then altering the least squares computations to make sure that no large dense arrays were being created throughout the routine. Specifically, it was necessary to change the order in which some of the operations were carried out to avoid the creations of large dense arrays. Now it is possible to calibrate constrained spatial interaction models using GLM's for larger N. The most demanding model estimation I have <a class="reference external" href="https://gist.github.com/TaylorOshan/42d90dbf219b50f3b0d54e06ba4e8b5b">tested</a> was a doubly-constrained model with 5000 locations, which implies N=25,000,000 and a design matrix with the dimensions of (25,000,000, 10001). Looking forward, I will further test this sparse GLM framework to see if there
+are any losses assocaited with it when N is small to moderate.</p>
+<p>This week I also explored gradient optimization packages that coyld be used in
+lieu of a GLM framework. So far the options seem to be between autograd/scipy or
+Theano. I was able to create a working <a class="reference external" href="https://gist.github.com/TaylorOshan/13c3b4a1d9489e03ea70ee52ecb0b61d">example</a> in autograd/scipy, though this
+has not been developed any further yet and will likely be pushed off until later
+in the project. For now, the focus will remain on using GLM's for estimation.</p>
+<p>Next week I will begin to look at diagnostics for count models, zand
+alternatives when we have overdispersed/zero-inflated dependent variables.</p>
+
+        </div><!-- /.entry-content -->
+
+</article>
+</section>
+
+        <aside id="sidebar">
+                <div class="widget">
+                        <h2>Categories</h2>
+                        <ul>
+                           <li class="active"><a href="/category/misc.html">misc</a></li>
+                        </ul>
+                </div>
+                <div class="widget blogroll">
+                        <h2>Blogroll</h2>
+                        <ul>
+                            <li><a href="http://getpelican.com/">Pelican</a></li>
+                            <li><a href="http://python.org/">Python.org</a></li>
+                            <li><a href="http://jinja.pocoo.org/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="widget social">
+                        <h2>Social</h2>
+                        <ul>
+                            <li><a href="/feeds/all.atom.xml" rel="alternate">atom feed</a></li>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </aside><!-- /#sidebar -->
+
+        <footer id="footer" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://alexis.notmyidea.org/pelican/">pelican</a>, which takes great advantages of <a href="http://python.org">python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is «notmyidea-cms», a modified version of «notmyidea», the default theme.</p>
+        </footer><!-- /#footer -->
+
+</body>
+</html>
