@@ -29,17 +29,10 @@
 
      <section id="content" class="body">
         <aside id="featured"><article>
-<<<<<<< HEAD
                 <h1 class="entry-title"><a href="/sparse_glm.html">Generalized Linear Models and Sparse Design Matrices</a></h1>
 <footer class="post-info">
         <abbr class="published" title="2016-06-03T16:12:00-07:00">
                 Fri 03 June 2016
-=======
-                <h1 class="entry-title"><a href="/framework.html">SpInt Framework</a></h1>
-<footer class="post-info">
-        <abbr class="published" title="2016-05-27T08:45:00-07:00">
-                Fri 27 May 2016
->>>>>>> 0fae9614462ece09bfc00a6143ff4c3cc9c948b5
         </abbr>
 
         <address class="vcard author">
@@ -47,7 +40,6 @@
         </address>
 <p>In <a href="/category/misc.html">misc</a>. </p>
 <p>tags: <a href="/tag/gsoc.html">GSOC</a></p></p></footer><!-- /.post-info --><!-- /.post-info -->
-<<<<<<< HEAD
                 <p>This week was primarily focused on exploring different options for estimating generalized linear models (GLM). First, I built an option into the gravity model class that would use exisitng GLM code through the statmodels project. Next, I put together my own code to carry out iteratively weighted least squares estimation for GLM's. Of immediate interest was a comparison of the speed of the code-bases for carrying out the estimation of a GLM. Each technique was used to calibrate each model variety (unconstrained, production-constrainedm atttraction-constrainem, and doubly constrained) when the number of origin-destination pairs (sample size) was N = 50, 100, 150, and 200. Some quick results can be see here in this <a class="reference external" href="https://gist.github.com/TaylorOshan/ccac7e5489b5b2b1799bf79ef001d922">gist</a>. Expectedly, the results show that for either technique the unconstrained models are the fastest to calibrate (no fixed effects), followed the by the singly-constrained models (N fixed effects), and finally, the doubly-constrained models take the longest (N*2 fixed effects). The more fixed effects in the model, the larger the deisgn matrix, X, and the longer the estimation routines will take. More surprisingly, the custom GLM (from now on just GLM) was way faster than the statsmodels GLM (from now on SMGLM). The statsmodels uses either the pseudoinverse or a QR decomposiiton to compute the least sqaures estimator, which would have been thought to be way quicker than the direct computations used in my code. For now, I have only tested the pseudo-indverse SMGLM, as the flag to switch to QR decomposition is not actually available to the SMGLM api (on to the weight least sqaures class at a lower level of abstraction). Perhaps, the SMGLM takes longer to compute because it has a fuller suite of diagnostics or perhaps the psuedo-inverse is not as quick when there is a sparse design matrix (i.e., many fixed effects).</p>
 <p>After some additional exploring, I found that there was an upper limit to the
 number of locations (N = locations**2) that could considered for the
@@ -65,52 +57,6 @@ has not been developed any further yet and will likely be pushed off until later
 in the project. For now, the focus will remain on using GLM's for estimation.</p>
 <p>Next week I will begin to look at diagnostics for count models, zand
 alternatives when we have overdispersed/zero-inflated dependent variables.</p>
-=======
-                <p>Given the API deisgn discussed in the previous post, the initial few days of
-coding were used to build the general framework and core classes that will be
-used in SpInt. Since the gravity-type models make up the majority of existig
-model specifications, the initial focus for developing the general framework
-essentially means focusing on developing classes for gravity models.</p>
-<p>It was decided to split the four primary model specfications (unconstrained or
-traditional gravity model, production-constrained, attraction-constrained,
-doubly-constrained) into four separate &quot;user&quot; style classes (see pysal.spreg
-module) that inherit from one base class (BaseGravity). These user classes
-serve to accept structured array inputs and configurations from the user and
-then carry out model-specific checks of the data. Then they pass the inputs into
-an __init__ method for BaseGravity. Depending on which inputs are passed and the
-type of user class that __init__ is called from, BaseGravity then further checks the
-data and preapres it into an endogenous dependent variable, y, and and a
-set of exogenous explanatory variables, X. Finally, BaseGravity then calls an
-__init__ method to the class that it inherits from, CountModel, with these newly
-formatted inputs and any estimation options, and a fit() method. The init_method
-carries out a simple check to make sure the dependent variable, y, is indeed a
-count-based variable and the fit method carries out the selected estimation
-routine. Currently the default estimatation framework/method is MLE using the generalized linear model (GLM)/iteratively re-weighted least squares (IWLS) in statmodels,
-though others can be added such as GLM/gradient search or non-linear
-formulations/gradient search.</p>
-<p>The design was carried out in this manner (CountModel --&gt; BaseGravity --&gt;
-Gravity/Production/Attraction/Doubly) in order to promote flexibility and modularity.
-For example, CountModel can be expanded by adding tests for overdisperison,
-additional estimation routines and count-based probability models other than
-Poisson (i.e., negative binomial), which can be useful throughout pysal for other count-based
-modeling tasks. This also means that SpInt is not a priori limited to any single
-type of estimation technique or probability model in the future. Then the BaseGravity
-class does the heavy lifting in terms of data munging and common data integrtiy
-checks. And finally, the user classes aim to restrcit input for specific types
-of gravity models, carry out model-specific checks, and then to organize and
-prepare the model results for the user.</p>
-<p>This code and an exmple of its use in an ipython notebook can be found <a class="reference external" href="https://github.com/TaylorOshan/pysal/blob/glm_spint/pysal/contrib/spint">here</a>. At
-the moment estimation can only be carried out using a GLM/IWLS in statmodels and
-only basic results are available, though a more user-friendly presentation of
-the results will be created, such as the results.summary() method in
-statsmodels.</p>
-<p>Looking forward, this framework will be filled out with the additons already
-described as well potentially adding a mechanism that allows users to flexibly
-use different input formats. Currently, input consists of all arrays, but it
-would be helpful to allow users to pass in a pandas DataFrames and the names of the columns that refer to different arrays. I will also begin
-to explore sparse data structures/algebra and when they will be the most
-beneficial to employ.</p>
->>>>>>> 0fae9614462ece09bfc00a6143ff4c3cc9c948b5
 
         </article></aside><!-- /#featured -->
                 <h1>Other articles</h1>
@@ -118,7 +64,6 @@ beneficial to employ.</p>
                     <ol id="posts-list" class="hfeed">
         <li><article class="hentry">
                 <header>
-<<<<<<< HEAD
                         <h1><a href="/framework.html" rel="bookmark" title="Permalink to SpInt Framework">SpInt Framework</a></h1>
                 </header>
 
@@ -139,8 +84,6 @@ beneficial to employ.</p>
         </article></li>
         <li><article class="hentry">
                 <header>
-=======
->>>>>>> 0fae9614462ece09bfc00a6143ff4c3cc9c948b5
                         <h1><a href="/api-design.html" rel="bookmark" title="Permalink to Initial GSOC meeting - API Design">Initial GSOC meeting - API Design</a></h1>
                 </header>
 
